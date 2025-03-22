@@ -3,15 +3,9 @@
  */
 
 import { AutoRouter } from 'itty-router';
-import {
-  InteractionResponseType,
-  InteractionType,
-  verifyKey,
-} from 'discord-interactions';
-import { AWW_COMMAND, INVITE_COMMAND } from './commands.js';
-import { getCuteUrl } from './reddit.js';
-import { InteractionResponseFlags } from 'discord-interactions';
-
+import { InteractionResponseType, InteractionType, verifyKey } from 'discord-interactions';
+import { WEATHER_COMMAND } from './commands.js';
+import { getWeather } from './weather.js';
 class JsonResponse extends Response {
   constructor(body, init) {
     const jsonBody = JSON.stringify(body);
@@ -25,7 +19,6 @@ class JsonResponse extends Response {
 }
 
 const router = AutoRouter();
-
 /**
  * A simple :wave: hello page to verify the worker is working.
  */
@@ -39,10 +32,7 @@ router.get('/', (request, env) => {
  * https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object
  */
 router.post('/', async (request, env) => {
-  const { isValid, interaction } = await server.verifyDiscordRequest(
-    request,
-    env,
-  );
+  const { isValid, interaction } = await server.verifyDiscordRequest(request, env);
   if (!isValid || !interaction) {
     return new Response('Bad request signature.', { status: 401 });
   }
@@ -57,24 +47,21 @@ router.post('/', async (request, env) => {
 
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
     // Most user commands will come as `APPLICATION_COMMAND`.
+    console.log(interaction.data.name.toLowerCase());
+    const { id, type, data } = interaction;
     switch (interaction.data.name.toLowerCase()) {
-      case AWW_COMMAND.name.toLowerCase(): {
-        const cuteUrl = await getCuteUrl();
+      case WEATHER_COMMAND.name.toLowerCase(): {
+        console.log('tutaj1');
+        const { name } = data;
+        const location = data.options[0].value;
+        const API = env.WEATHER_API_KEY;
+        const weatherData = await getWeather(API,location);
+        console.log(weatherData)
+        // console.log(weatherData);
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: cuteUrl,
-          },
-        });
-      }
-      case INVITE_COMMAND.name.toLowerCase(): {
-        const applicationId = env.DISCORD_APPLICATION_ID;
-        const INVITE_URL = `https://discord.com/oauth2/authorize?client_id=${applicationId}&scope=applications.commands`;
-        return new JsonResponse({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: {
-            content: INVITE_URL,
-            flags: InteractionResponseFlags.EPHEMERAL,
+            content: `Aktualnie w ${location} jest ${weatherData.current.temp_c}`,
           },
         });
       }
@@ -92,10 +79,7 @@ async function verifyDiscordRequest(request, env) {
   const signature = request.headers.get('x-signature-ed25519');
   const timestamp = request.headers.get('x-signature-timestamp');
   const body = await request.text();
-  const isValidRequest =
-    signature &&
-    timestamp &&
-    (await verifyKey(body, signature, timestamp, env.DISCORD_PUBLIC_KEY));
+  const isValidRequest = signature && timestamp && (await verifyKey(body, signature, timestamp, env.DISCORD_PUBLIC_KEY));
   if (!isValidRequest) {
     return { isValid: false };
   }

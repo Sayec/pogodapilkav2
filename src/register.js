@@ -1,4 +1,4 @@
-import { AWW_COMMAND, INVITE_COMMAND } from './commands.js';
+import { WEATHER_COMMAND } from './commands.js';
 import dotenv from 'dotenv';
 import process from 'node:process';
 
@@ -17,9 +17,7 @@ if (!token) {
   throw new Error('The DISCORD_TOKEN environment variable is required.');
 }
 if (!applicationId) {
-  throw new Error(
-    'The DISCORD_APPLICATION_ID environment variable is required.',
-  );
+  throw new Error('The DISCORD_APPLICATION_ID environment variable is required.');
 }
 
 /**
@@ -34,7 +32,7 @@ const response = await fetch(url, {
     Authorization: `Bot ${token}`,
   },
   method: 'PUT',
-  body: JSON.stringify([AWW_COMMAND, INVITE_COMMAND]),
+  body: JSON.stringify([WEATHER_COMMAND]),
 });
 
 if (response.ok) {

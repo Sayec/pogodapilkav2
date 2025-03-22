@@ -3,12 +3,15 @@
  * and registration.
  */
 
-export const AWW_COMMAND = {
-  name: 'awwww',
-  description: 'Drop some cuteness on this channel.',
-};
-
-export const INVITE_COMMAND = {
-  name: 'invite',
-  description: 'Get an invite link to add the bot to your server',
+export const WEATHER_COMMAND = {
+  name: 'pogoda',
+  description: 'sprawdź pogodę',
+  options: [
+    {
+      name: 'location',
+      description: 'miejscowość z której chcesz pobrać pogodę',
+      required: true,
+      type: 3,
+    },
+  ],
 };
